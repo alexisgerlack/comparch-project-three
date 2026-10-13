@@ -1,33 +1,52 @@
-`include "memory.sv"
+`include "get.sv"
+`include "store.sv"
 `include "ws2812b.sv"
 `include "controller.sv"
 
-// led_matrix top level module
+// game of life top level module
 
 module top(
     input logic     clk,
-    input logic     SW,
-    input logic     BOOT,
     output logic    _48b,
     output logic    _45a
 );
-
-    logic [7:0] pixel;
-    logic [8:0] address;
+    localparam WIDTH = 8;
+    localparam DEPTH = 8;
+    localparam [23:0] ALIVE_GRB = 24'h100008; //GRB
+    parameter FRAMES = 16; //led frames per step of each life gen .5 seconds ish
 
     logic transmit_pixel;
     logic shift;
     logic ws2812b_out;
+    logic get;
+    logic store;
+    logic load_sreg;
+    logic [5:0] pixel;
+    logic [4:0] frame; //16 frames so 4 bit
+    logic [4:0] frame_q = 24'd0;
+    logic [WIDTH*DEPTH-1:0] board;
 
-    assign address = { pixel };
-
-    // Instance sample memory for red channel
-    memory #(
-        .INIT_FILE      ("inital_board.txt")
+    always (posedge clk) begin //every FRAMES frame get is true
+        frame_q <= frame;
+        assign get = (frame != frame_q) && (frame == 0||frame ==16); //fires at 0 and 16 frames
+    end
+    // Instance of simulation
+    get #(
+        .INIT_FILE      ("inital_board.txt"),
+        .BOARD_FILE     ("board.txt")
     ) u1 (
         .clk            (clk),
-        .read_address   (address),
-        .read_data      (data)
+        .get            (get),
+        .board          (board),
+        .store          (store)
+    );
+    //storing simulation to file
+    store #(
+        .BOARD_FILE("board.txt")
+    ) u2 (
+        .clk            (clk),
+        .store          (store),
+        .new_board      (board)
     );
 
     // Instance the WS2812B output driver
