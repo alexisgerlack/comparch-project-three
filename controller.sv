@@ -44,15 +44,9 @@ module controller (
         unique case (state)
             TRANSMIT_FRAME:
                 //if we are on the last pixel and we are done transmitting
-                if ((pixel_counter == 6'd63) && (transmit_pixel_done))
-                    next_state = IDLE;
-                else
-                    next_state = TRANSMIT_FRAME;
+                next_state = ((pixel_counter == 6'd63) && (transmit_pixel_done)) ? IDLE : TRANSMIT_FRAME;
             IDLE:
-                if (idle_done)
-                    next_state = TRANSMIT_FRAME;
-                else
-                    next_state = IDLE;
+                next_state = (idle_done) ? TRANSMIT_FRAME : IDLE;
         endcase
     end
 
@@ -74,29 +68,16 @@ module controller (
         if ((state == TRANSMIT_FRAME) && transmit_pixel_done) begin
             pixel_counter <= pixel_counter + 1;//if we are transmitting the pixel switch to the next
         end
-    end
 
-    always_ff @(negedge clk) begin
         if (idle_done) begin //if we are done idling
             frame_counter <= frame_counter + 1;//move to the next frame
         end
-    end
 
-    always_ff @(negedge clk) begin
-        if (transmit_phase == TRANSMIT_PIXEL) begin //if we are transmitting pixels
-            transmit_counter <= transmit_counter + 1;//continue
-        end
-        else
-            transmit_counter <= 9'd0; //reset
-    end
+        //if we r trasmitting pixels continue else reset
+        transmit_counter <= (transmit_phase == TRANSMIT_PIXEL) ? transmit_counter + 1 : 9'd0;
 
-    always_ff @(negedge clk) begin
-        if (state == IDLE) begin //if we are idling
-            idle_counter <= idle_counter + 1; //wait
-        end
-        else begin
-            idle_counter <= 20'd0; //reset
-        end
+        //if we r idling wait, else reset
+        idle_counter <= (state) ? idle_counter + 1 : 20'd0;
     end
 
     assign pixel = pixel_counter;

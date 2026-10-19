@@ -41,10 +41,8 @@ module ws2812b(
 
     always_comb begin
         if (state == TRANSMITTING) // if we are changing from transmitting to idle
-            if (bit_being_sent == 1'b0) // and we are sending zero
-                ws2812b_out = (cycle_count < T0_CYCLE_COUNT); //i dont understand this part but i know its converting the data
-            else
-                ws2812b_out = (cycle_count < T1_CYCLE_COUNT);
+            // and we are sending zero transmit the data on T0 cycle count else T1
+            ws2812b_out = (bit_being_sent == 1'b0) ? (cycle_count < T0_CYCLE_COUNT) : (cycle_count < T1_CYCLE_COUNT);
         else
             ws2812b_out = 1'b0; //if we are not transmitting zero
     end

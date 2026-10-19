@@ -13,8 +13,7 @@ module store #(
     always @(posedge store)begin
         //writing new_board file to board.txt
         for (int i=0; i < DEPTH; i++)
-            rows[i] = board[i*WIDTH : WIDTH]; //turning each row into a single 64-bit vector
-
+            rows[i] = new_board[i*WIDTH +: WIDTH]; //turning each row into a single 64-bit vector
         $writememb(BOARD_FILE, rows);
     end
 `endif
